@@ -74,13 +74,6 @@ func (t *TCPTransport) handleConnection(conn net.Conn, peerID string) {
 }
 
 func (t *TCPTransport) Send(peerID string, msg *Message) error {
-	// Wrap raw data in a Message struct
-	// msg := &Message{
-	// 	Type: "text", // You can change this to other types like "upload", "ping", etc.
-	// 	Data: data,
-	// }
-
-	// Serialize the message using GOB
 	payload, err := Encode(msg)
 	if err != nil {
 		return err

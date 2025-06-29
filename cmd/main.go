@@ -21,16 +21,6 @@ func main() {
 
 	transport := p2p.NewTCPTransport(selfAddr)
 
-	// 设置收到消息时的回调函数
-	// transport.OnMessage(func(peerID string, data []byte) {
-	// 	fmt.Printf("[recv from %s]: %s\n", peerID, string(data))
-	// })
-
-	// 设置收到gob时的回调函数
-	// transport.OnMessage(func(peerID string, msg *p2p.Message) {
-	// 	fmt.Printf("[recv from %s] Type: %s | Data: %s\n", peerID, msg.Type, string(msg.Data))
-	// })
-
 
 	transport.OnMessage(func(peerID string, msg *p2p.Message) {
 		fmt.Printf("[recv from %s] Type: %s | Len: %d bytes\n", peerID, msg.Type, len(msg.Data))
@@ -55,6 +45,38 @@ func main() {
 				return
 			}
 			fmt.Println("[upload]: File stored with key", key)
+
+		case "download":
+			fileKey := string(msg.Data)
+			s := store.New("./data") 
+			reader, err := s.Read(fileKey)
+			if err != nil {
+				fmt.Println("[download]: Requested file not found:", fileKey)
+				return
+			}
+			content, _ := io.ReadAll(reader)
+			resp := &p2p.Message{
+				Type: "download_result",
+				Data: content,
+			}
+			err = transport.Send(peerID, resp)
+			if err != nil {
+				fmt.Println("Failed to send download_result:", err)
+			} else {
+				fmt.Println("[download]: Sent file", fileKey, "to", peerID)
+			}
+
+		case "download_result":
+			tmpPath := fmt.Sprintf("./data/downloaded_%d", time.Now().UnixNano())
+			err := os.WriteFile(tmpPath, msg.Data, 0644)
+			if err != nil {
+				fmt.Println("Failed to save downloaded file:", err)
+			} else {
+				fmt.Println("[download_result]: File saved to", tmpPath)
+			}
+
+		default:
+			fmt.Println("Unknown message type:", msg.Type)
 		}
 	})
 	
@@ -75,24 +97,14 @@ func main() {
 		targetAddr := os.Args[2] // e.g. :9000
 		reader := bufio.NewReader(os.Stdin)
 
-		// for {
-		// 	fmt.Print("Enter message: ")
-		// 	msg, _ := reader.ReadString('\n')
-		// 	err := transport.Send(targetAddr, []byte(msg))
-		// 	if err != nil {
-		// 		fmt.Printf("Send error: %v\n", err)
-		// 	}
-		// }
-
 		for {
-			fmt.Print("Enter command (text <msg> | upload <file>): ")
+			fmt.Print("Enter command (text <msg> | upload <file> | download <key>): ")
 			input, _ := reader.ReadString('\n')
 			input = strings.TrimSpace(input)
 		
 			if strings.HasPrefix(input, "text ") {
 				text := strings.TrimPrefix(input, "text ")
 				msg := &p2p.Message{Type: "text", Data: []byte(text)}
-				// payload, _ := p2p.Encode(msg)
 				transport.Send(targetAddr, msg)
 		
 			} else if strings.HasPrefix(input, "upload ") {
@@ -106,9 +118,17 @@ func main() {
 		
 				content, _ := io.ReadAll(f)
 				msg := &p2p.Message{Type: "upload", Data: content}
-				// payload, _ := p2p.Encode(msg)
 				transport.Send(targetAddr, msg)
 				
+			} else if strings.HasPrefix(input, "download ") {
+				key := strings.TrimPrefix(input, "download ")
+				msg := &p2p.Message{Type: "download", Data: []byte(key)}
+				err := transport.Send(targetAddr, msg)
+				if err != nil {
+					fmt.Printf("Send error: %v\n", err)
+				} else {
+					fmt.Println("[debug] download request sent for key:", key)
+				}
 			}
 		}
 

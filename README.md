@@ -74,29 +74,46 @@ Start sender node
 go run cmd/main.go :9001 :9000
 ```
 
-upload the file
+send text:
 ```
-upload hello.txt
 ```
-
+Enter command (text <msg> | upload <file>): text Hello from node 9001
+```
 You will see:
 ```
-go run cmd/main.go 127.0.0.1:9001 127.0.0.1:9000
-2025/06/28 22:16:20 [P2P] Listening on 127.0.0.1:9001
-Enter command (text <msg> | upload <file>): text abc
-2025/06/28 22:16:28 [debug] sending message to 127.0.0.1:9000, size=54
+[text msg]: Hello from node 9001
+```
+
+
+upload the file:
+```
+Enter command (text <msg> | upload <file>): upload hello.txt
+```
+
+You will find the uploaded file in ./data/ and see:
+```
 Enter command (text <msg> | upload <file>): upload hello.txt
 2025/06/28 22:16:34 [debug] sending message to 127.0.0.1:9000, size=83
 ```
 
 ```
-go run cmd/main.go 127.0.0.1:9000
-2025/06/28 22:16:17 [P2P] Listening on 127.0.0.1:9000
-2025/06/28 22:16:28 [debug] Decoded msg: type=text, len=3
-[recv from 127.0.0.1:62589] Type: text | Len: 3 bytes
-[text msg]: abc
-2025/06/28 22:16:34 [debug] Decoded msg: type=upload, len=30
-[recv from 127.0.0.1:62589] Type: upload | Len: 30 bytes
+2025/06/29 15:25:43 [debug] Decoded msg: type=upload, len=30
+[recv from 127.0.0.1:53289] Type: upload | Len: 30 bytes
 [debug] Received upload message
-[upload]: File stored with key
+[upload]: File stored with key 48a5d2f0dff82506c5df4e1199b4c0e21938cfd2
 ```
+
+download file:
+```
+Enter command (text <msg> | upload <file>): download 48a5d2f0dff82506c5df4e1199b4c0e21938cfd2
+```
+You will find the downloaded file in ./data/ and see:
+```
+[download]: Sent file 48a5d2f0dff82506c5df4e1199b4c0e21938cfd2 to 127.0.0.1:53289
+```
+```
+[recv from 127.0.0.1:9000] Type: download_result | Len: 30 bytes
+[download_result]: File saved to ./data/downloaded_1751236160166123000
+```
+
+
