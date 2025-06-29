@@ -2,6 +2,7 @@
 
 A Decentralized, Encrypted File Storage System with P2P Networking
 
+```
 gop2p-vault/
 ├── cmd/                      # Executable entrypoints
 │   └── main.go               # CLI startup (node initialization)
@@ -43,7 +44,7 @@ gop2p-vault/
 ├── go.mod                    # Go module definition
 ├── go.sum                    # Dependency checksums
 └── README.md                 # Project documentation
-
+```
 
 ## Quick Start Guide
 1. Initialize Go Module
