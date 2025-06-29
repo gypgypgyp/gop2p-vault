@@ -1,7 +1,7 @@
 package p2p
 
 import (
-	// "fmt"
+	"fmt"
 	"io"
 	"log"
 	"net"
@@ -10,6 +10,7 @@ import (
 
 type TCPTransport struct {
 	address     string
+	selfID      string
 	listener    net.Listener
 	connections map[string]net.Conn
 	lock        sync.RWMutex
@@ -18,7 +19,8 @@ type TCPTransport struct {
 
 func NewTCPTransport(addr string) *TCPTransport {
 	return &TCPTransport{
-		address:     addr, // ✅ 加上这个！
+		address:     addr, 
+		selfID:      addr,
 		connections: make(map[string]net.Conn),
 	}
 }
@@ -36,7 +38,16 @@ func (t *TCPTransport) ListenAndAccept() error {
 		if err != nil {
 			return err
 		}
-		peerID := conn.RemoteAddr().String()
+		// peerID := conn.RemoteAddr().String()
+
+		peerInfo, err := PerformHandshake(conn, t.address, false)
+		if err != nil {
+			log.Printf("[P2P] Handshake failed from %s: %v\n", conn.RemoteAddr(), err)
+			conn.Close()
+			continue
+		}
+		peerID := peerInfo.ID
+
 		t.lock.Lock()
 		t.connections[peerID] = conn
 		t.lock.Unlock()
@@ -92,6 +103,14 @@ func (t *TCPTransport) Send(peerID string, msg *Message) error {
 		if err != nil {
 			return err
 		}
+
+		peerInfo, err := PerformHandshake(conn, t.address, true)
+		if err != nil {
+			conn.Close()
+			return fmt.Errorf("handshake failed with %s: %v", peerID, err)
+		}
+		peerID := peerInfo.ID
+
 		t.lock.Lock()
 		t.connections[peerID] = conn
 		t.lock.Unlock()
@@ -103,31 +122,6 @@ func (t *TCPTransport) Send(peerID string, msg *Message) error {
 	// Send the encoded payload
 	_, err = conn.Write(payload)
 	return err
-
-	// t.lock.RLock()
-	// conn, ok := t.connections[peerID]
-	// t.lock.RUnlock()
-	// if !ok {
-	// 	// 尝试建立连接
-	// 	conn, err := net.Dial("tcp", peerID)
-	// 	if err != nil {
-	// 		return err
-	// 	}
-	// 	t.lock.Lock()
-	// 	t.connections[peerID] = conn
-	// 	t.lock.Unlock()
-
-	// 	// 启动监听协程
-	// 	go t.handleConnection(conn, peerID)
-	// }
-
-	// // 再次获取连接（可能是新建的）
-	// t.lock.RLock()
-	// conn = t.connections[peerID]
-	// t.lock.RUnlock()
-
-	// _, err := conn.Write(data)
-	// return err
 }
 
 func (t *TCPTransport) OnMessage(h HandlerFunc) {
