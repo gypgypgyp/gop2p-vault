@@ -11,6 +11,7 @@ import (
 
 	"gop2p-vault/p2p"
 	"gop2p-vault/store"
+	"gop2p-vault/server"
 )
 
 func main() {
@@ -33,32 +34,21 @@ func main() {
 			fmt.Println("[debug] Received upload message")
 
 			// Compute file hash as key
-			key, err := store.HashKey(strings.NewReader(string(msg.Data)))
+			key, err := server.HandleUpload(msg.Data)
 			if err != nil {
 				fmt.Println("Failed to hash content:", err)
-				return
-			}
-			s := store.New("./data")
-			err = s.Write(key, strings.NewReader(string(msg.Data)))
-			if err != nil {
-				fmt.Println("Failed to write file:", err)
 				return
 			}
 			fmt.Println("[upload]: File stored with key", key)
 
 		case "download":
 			fileKey := string(msg.Data)
-			s := store.New("./data") 
-			reader, err := s.Read(fileKey)
+			resp, err := server.HandleDownload(fileKey)
 			if err != nil {
-				fmt.Println("[download]: Requested file not found:", fileKey)
+				fmt.Println("[download]: Requested file not found:", err)
 				return
 			}
-			content, _ := io.ReadAll(reader)
-			resp := &p2p.Message{
-				Type: "download_result",
-				Data: content,
-			}
+
 			err = transport.Send(peerID, resp)
 			if err != nil {
 				fmt.Println("Failed to send download_result:", err)
@@ -67,12 +57,11 @@ func main() {
 			}
 
 		case "download_result":
-			tmpPath := fmt.Sprintf("./data/downloaded_%d", time.Now().UnixNano())
-			err := os.WriteFile(tmpPath, msg.Data, 0644)
+			path, err := server.HandleDownloadResult(msg.Data)
 			if err != nil {
 				fmt.Println("Failed to save downloaded file:", err)
 			} else {
-				fmt.Println("[download_result]: File saved to", tmpPath)
+				fmt.Println("[download_result]: File saved to", path)
 			}
 
 		default:
