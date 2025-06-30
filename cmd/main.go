@@ -63,6 +63,15 @@ func main() {
 				fmt.Println("[download_result]: File saved to", path)
 			}
 
+		case "delete":
+			fileKey := string(msg.Data)
+			err := server.HandleDelete(fileKey)
+			if err != nil {
+				fmt.Println("[delete]: Failed to delete file:", err)
+			} else {
+				fmt.Println("[delete]: File", fileKey, "deleted successfully")
+			}
+
 		default:
 			fmt.Println("Unknown message type:", msg.Type)
 		}
@@ -117,10 +126,17 @@ func main() {
 				} else {
 					fmt.Println("[debug] download request sent for key:", key)
 				}
+			} else if strings.HasPrefix(input, "delete ") {
+				key := strings.TrimPrefix(input, "delete ")
+				msg := &p2p.Message{Type: "delete", Data: []byte(key)}
+				err := transport.Send(targetAddr, msg)
+				if err != nil {
+					fmt.Printf("Send error: %v\n", err)
+				} else {
+					fmt.Println("[debug] delete request sent for key:", key)
+				}
 			}
 		}
-
 	}
-
 	select {} // 阻止主线程退出（用于监听模式）
 }

@@ -80,3 +80,10 @@ func HandleDownloadResult(data []byte) (string, error) {
 	}
 	return tmpPath, nil
 }
+
+// HandleDelete deletes the file by its hash key
+func HandleDelete(fileKey string) error {
+	s := store.New("./data")
+	return s.Delete(fileKey)
+}
+
