@@ -103,6 +103,9 @@ Enter command (text <msg> | upload <file>): upload hello.txt
 [upload]: File stored with key 48a5d2f0dff82506c5df4e1199b4c0e21938cfd2
 ```
 
+There will be an encryped file under ./data directory.
+
+
 download file:
 ```
 Enter command (text <msg> | upload <file>): download 48a5d2f0dff82506c5df4e1199b4c0e21938cfd2
@@ -116,4 +119,4 @@ You will find the downloaded file in ./data/ and see:
 [download_result]: File saved to ./data/downloaded_1751236160166123000
 ```
 
-
+There will be an decryped file under ./data directory.
