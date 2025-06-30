@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"gop2p-vault/p2p"
-	"gop2p-vault/store"
+	// "gop2p-vault/store"
 	"gop2p-vault/server"
 )
 
