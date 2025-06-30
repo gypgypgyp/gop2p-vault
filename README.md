@@ -76,7 +76,6 @@ go run cmd/main.go :9001 :9000
 
 send text:
 ```
-```
 Enter command (text <msg> | upload <file>): text Hello from node 9001
 ```
 You will see:
@@ -103,7 +102,7 @@ Enter command (text <msg> | upload <file>): upload hello.txt
 [upload]: File stored with key 48a5d2f0dff82506c5df4e1199b4c0e21938cfd2
 ```
 
-There will be an encryped file under ./data directory.
+There will be an encryped file under ./data directory (with shard pathing).
 
 
 download file:

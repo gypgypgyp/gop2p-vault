@@ -15,6 +15,7 @@ import (
 )
 
 import "strconv"
+import "gop2p-vault/store"
 
 func parseInt64(s string) int64 {
 	n, _ := strconv.ParseInt(s, 10, 64)
@@ -88,6 +89,24 @@ func main() {
 			}
 			fmt.Printf("[metadata] Received metadata: Name=%s, Size=%d, Hash=%s, Mime=%s\n",
 				md.Name, md.Size, md.Hash, md.MimeType)
+
+		case "have":
+			fileKey := string(msg.Data)
+			filePath := store.HashPath("./data", fileKey)
+    		_, err := os.Stat(filePath)
+			reply := "no"
+			if err == nil {
+				reply = "yes"
+			}
+			resp := &p2p.Message{
+				Type: "have_result",
+				Data: []byte(reply),
+			}
+			transport.Send(peerID, resp)
+		
+		case "have_result":
+			fmt.Printf("[have_result] Peer %s has file: %s\n", peerID, string(msg.Data))
+			
 
 		default:
 			fmt.Println("Unknown message type:", msg.Type)
@@ -171,8 +190,11 @@ func main() {
 				}
 				msg := &p2p.Message{Type: "metadata", Data: data}
 				transport.Send(targetAddr, msg)
+			}else if strings.HasPrefix(input, "have ") {
+				key := strings.TrimPrefix(input, "have ")
+				msg := &p2p.Message{Type: "have", Data: []byte(key)}
+				transport.Send(targetAddr, msg)
 			}
-
 		}
 	}
 	select {} // 阻止主线程退出（用于监听模式）

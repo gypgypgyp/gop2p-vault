@@ -5,6 +5,8 @@ import (
 	"encoding/hex"
 	"io"
 	"bytes"
+	// "fmt"
+	"path/filepath"
 )
 
 // HashKey generates a SHA-1 hash for a file stream
@@ -25,4 +27,11 @@ func HashKeyBytes(data []byte) (string, error) {
 // Optional helper for compatibility
 func BytesReader(data []byte) io.Reader {
 	return bytes.NewReader(data)
+}
+
+// HashPath converts a SHA-1 hash string into a sharded file path like ./data/66/c5/<hash>
+func HashPath(baseDir, hash string) string {
+	sub1 := hash[0:2]
+	sub2 := hash[2:4]
+	return filepath.Join(baseDir, sub1, sub2, hash)
 }
