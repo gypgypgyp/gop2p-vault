@@ -11,7 +11,15 @@ import (
 
 	"gop2p-vault/p2p"
 	"gop2p-vault/server"
+	"gop2p-vault/protocol"
 )
+
+import "strconv"
+
+func parseInt64(s string) int64 {
+	n, _ := strconv.ParseInt(s, 10, 64)
+	return n
+}
 
 func main() {
 	if len(os.Args) < 2 {
@@ -72,6 +80,15 @@ func main() {
 				fmt.Println("[delete]: File", fileKey, "deleted successfully")
 			}
 
+		case "metadata":
+			md, err := protocol.DecodeMetadata(msg.Data)
+			if err != nil {
+				fmt.Println("Failed to decode metadata:", err)
+				return
+			}
+			fmt.Printf("[metadata] Received metadata: Name=%s, Size=%d, Hash=%s, Mime=%s\n",
+				md.Name, md.Size, md.Hash, md.MimeType)
+
 		default:
 			fmt.Println("Unknown message type:", msg.Type)
 		}
@@ -95,7 +112,7 @@ func main() {
 		reader := bufio.NewReader(os.Stdin)
 
 		for {
-			fmt.Print("Enter command (text <msg> | upload <file> | download <key>): ")
+			fmt.Print("Enter command (text <msg> | upload <file> | download <key> | metadata): ")
 			input, _ := reader.ReadString('\n')
 			input = strings.TrimSpace(input)
 		
@@ -135,7 +152,27 @@ func main() {
 				} else {
 					fmt.Println("[debug] delete request sent for key:", key)
 				}
+			} else if strings.HasPrefix(input, "meta ") {
+				fields := strings.Fields(strings.TrimPrefix(input, "meta "))
+				if len(fields) != 4 {
+					fmt.Println("Usage: meta <Name> <Size> <Hash> <Mime>")
+					continue
+				}
+				md := &protocol.Metadata{
+					Name:     fields[0],
+					Size:     parseInt64(fields[1]),
+					Hash:     fields[2],
+					MimeType: fields[3],
+				}
+				data, err := protocol.EncodeMetadata(md)
+				if err != nil {
+					fmt.Println("Encoding error:", err)
+					continue
+				}
+				msg := &p2p.Message{Type: "metadata", Data: data}
+				transport.Send(targetAddr, msg)
 			}
+
 		}
 	}
 	select {} // 阻止主线程退出（用于监听模式）

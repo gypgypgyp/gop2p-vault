@@ -114,9 +114,20 @@ You will find the downloaded file in ./data/ and see:
 ```
 [download]: Sent file 48a5d2f0dff82506c5df4e1199b4c0e21938cfd2 to 127.0.0.1:53289
 ```
+
 ```
 [recv from 127.0.0.1:9000] Type: download_result | Len: 30 bytes
 [download_result]: File saved to ./data/downloaded_1751236160166123000
 ```
 
 There will be an decryped file under ./data directory.
+
+
+send metadata:
+```
+meta test.txt 12345 abc123 text/plain
+```
+you will see:
+```
+[metadata] Received metadata: Name=test.txt, Size=12345, Hash=abc123, Mime=text/plain
+```
